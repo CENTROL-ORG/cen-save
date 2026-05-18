@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { background: #0a0a0a; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 30px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; position: relative; }
         .full-width { grid-column: span 3; }
         .card { background: #111; border: 1px solid #222; padding: 25px; border-radius: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
         h2 { margin-top: 0; font-weight: 800; letter-spacing: -0.5px; font-size: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -18,10 +18,9 @@
         .accent-blue { color: #00e1ff; }
         .accent-amber { color: #ffb300; }
         
-        .main-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px; }
+        .main-stats { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 10px; }
         .stat-box { background: #161616; padding: 15px; border-radius: 10px; border-left: 4px solid #333; }
         .stat-box.primary { border-left-color: #00e1ff; }
-        .stat-box.secondary { border-left-color: #ffb300; }
         .stat-label { font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase; }
         .stat-value { font-size: 24px; font-weight: bold; margin-top: 5px; font-family: monospace; }
 
@@ -45,109 +44,136 @@
         .ledger-box { max-height: 220px; overflow-y: auto; margin-top: 15px; padding-right: 5px; }
         .ledger-item { background: #161616; padding: 10px; border-radius: 8px; border: 1px solid #222; margin-bottom: 8px; font-size: 12px; }
         .ledger-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+
+        /* Notification Banner Style */
+        .topup-popup { display: none; background: #2b1116; border: 2px solid #ff0033; border-radius: 12px; padding: 15px; margin-bottom: 20px; animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 5px #ff0033; }
+            50% { box-shadow: 0 0 20px #ff0033; }
+            100% { box-shadow: 0 0 5px #ff0033; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    
-    <!-- Top System Overview Block -->
-    <div class="card full-width" style="background: #111;">
-        <h2>🏛️ CEN SAVE MANAGEMENT TERMINAL</h2>
-        <div class="main-stats">
-            <div class="stat-box primary">
-                <div class="stat-label">CEN Current Bank Balance</div>
-                <div id="display-current-bal" class="stat-value accent-blue">CEN 0.00</div>
+<div style="width: 100%; max-width: 1200px;">
+
+    <!-- Automated Topup Popup Notification Alert -->
+    <div id="topup-alert-banner" class="topup-popup">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong class="accent-red" style="font-size: 16px;">⚠️ CRITICAL RD VAULT NOTICE</strong>
+                <div style="font-size: 13px; margin-top: 4px; color: #ddd;">An automated contract is hanging in its 24-Hour grace period! Please perform an emergency RD Bank Topup immediately to prevent a 10% penalty liquidation break.</div>
             </div>
-            <div class="stat-box secondary">
-                <div class="stat-label">RD Vault Ledger Bank Balance</div>
-                <div id="display-rd-vault-bal" class="stat-value accent-amber">CEN 0.00</div>
-            </div>
+            <button class="btn-red" style="width: auto; padding: 8px 15px; margin: 0;" onclick="dismissAlertBanner()">Acknowledge</button>
         </div>
     </div>
 
-    <!-- Tier 1: The Saving Bank -->
-    <div class="card">
-        <div>
-            <h2>1️⃣ Saving Bank Vault</h2>
-            <div class="sub-metric">
-                <div>
-                    <div style="font-size:11px; color:#666; font-weight:bold;">SAVINGS ACCOUNT EQUITY</div>
-                    <div id="sb-balance" style="font-size:22px; font-weight:bold; font-family:monospace;" class="accent-green">CEN 0.00</div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size:10px; color:#aaa;">Untouched Benchmark</div>
-                    <div id="sb-untouched" style="font-family:monospace; font-weight:bold; color:#00ff88;">CEN 0.00</div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Transaction Amount (CEN)</label>
-                <input type="number" id="sb-amount" placeholder="0.00" min="1">
-            </div>
-        </div>
-        <div>
-            <button class="btn-green" onclick="handleSavingsTransaction('deposit')">DEPOSIT TO SAVING BANK</button>
-            <button class="btn-blue" onclick="handleSavingsTransaction('withdraw')" style="margin-top:8px;">WITHDRAW TO CURRENT BANK</button>
-            <div style="font-size:10px; color:#555; text-align:center; margin-top:10px;">7-Day loops apply 3% interest reward automatically to the untouched benchmark matrix capital.</div>
-        </div>
-    </div>
-
-    <!-- Tier 2: Fixed Deposits (FD) -->
-    <div class="card">
-        <div>
-            <h2>2️⃣ Fixed Deposits Panel</h2>
-            <div class="form-group">
-                <label>FD Allocation Capital (Min: CEN 500)</label>
-                <input type="number" id="fd-amount" placeholder="CEN 500.00">
-            </div>
-            <div class="form-group">
-                <label>Maturation Term Duration</label>
-                <select id="fd-duration" onchange="calculateFdPreview()">
-                    <option value="1">1 Week Time-Lock (6% Return)</option>
-                    <option value="2">2 Weeks Time-Lock (8% Return)</option>
-                    <option value="3">3 Weeks Time-Lock (10% Return)</option>
-                    <option value="4">4 Weeks Time-Lock (12% Return)</option>
-                    <option value="5">5 Weeks Time-Lock (14% Return)</option>
-                </select>
-            </div>
-            <div id="fd-preview" style="font-size:11px; color:#aaa; margin-bottom:10px; font-family:monospace;">Yield Estimation: Pending Input...</div>
-            <button class="btn-green" onclick="initializeFixedDeposit()">EMIT TIME-LOCKED FD</button>
-        </div>
+    <div class="container">
         
-        <div>
-            <label style="margin-top:15px;">Active Fixed Deposit Matrix Ledger</label>
-            <div id="fd-ledger" class="ledger-box"></div>
+        <!-- Top System Overview Block -->
+        <div class="card full-width" style="background: #111;">
+            <h2>🏛️ CEN SAVE MANAGEMENT TERMINAL</h2>
+            <div class="main-stats">
+                <div class="stat-box primary">
+                    <div class="stat-label">CEN Current Bank Balance</div>
+                    <div id="display-current-bal" class="stat-value accent-blue">CEN 0.00</div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Tier 3: Recurring Deposits (RD) -->
-    <div class="card">
-        <div>
-            <h2>3️⃣ Recurring Deposits Engine</h2>
+        <!-- Tier 1: The Saving Bank & RD Bank Sub-Panel -->
+        <div class="card">
+            <div>
+                <h2>1️⃣ Vault Registry</h2>
+                
+                <!-- Saving Bank Panel Layout -->
+                <div class="sub-metric">
+                    <div>
+                        <div style="font-size:11px; color:#666; font-weight:bold;">SAVINGS ACCOUNT EQUITY</div>
+                        <div id="sb-balance" style="font-size:22px; font-weight:bold; font-family:monospace;" class="accent-green">CEN 0.00</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size:10px; color:#aaa;">Untouched Floor</div>
+                        <div id="sb-untouched" style="font-family:monospace; font-weight:bold; color:#00ff88;">CEN 0.00</div>
+                    </div>
+                </div>
+
+                <!-- RD Bank Panel Layout (Moved below Saving Bank directly) -->
+                <div class="sub-metric" style="border-left: 4px solid #ffb300; margin-bottom: 25px;">
+                    <div>
+                        <div style="font-size:11px; color:#666; font-weight:bold;">RD BANK BALANCE</div>
+                        <div id="display-rd-vault-bal" style="font-size:22px; font-weight:bold; font-family:monospace;" class="accent-amber">CEN 0.00</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <button class="btn-amber" style="margin:0; padding:4px 8px; font-size:10px; width:auto;" onclick="handleRdVaultExchange('deposit')">Topup</button>
+                        <button class="btn-blue" style="margin:0; padding:4px 8px; font-size:10px; width:auto;" onclick="handleRdVaultExchange('withdraw')">Withdraw</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Savings Transaction Amount (CEN)</label>
+                    <input type="number" id="sb-amount" placeholder="0.00" min="1">
+                </div>
+            </div>
+            <div>
+                <button class="btn-green" onclick="handleSavingsTransaction('deposit')">DEPOSIT TO SAVING BANK</button>
+                <button class="btn-blue" onclick="handleSavingsTransaction('withdraw')" style="margin-top:8px;">WITHDRAW TO CURRENT BANK</button>
+                <div style="font-size:10px; color:#555; text-align:center; margin-top:10px;">7-Day loops apply 3% interest reward automatically to the untouched benchmark matrix capital.</div>
+            </div>
+        </div>
+
+        <!-- Tier 2: Fixed Deposits (FD) -->
+        <div class="card">
+            <div>
+                <h2>2️⃣ Fixed Deposits Panel</h2>
+                <div class="form-group">
+                    <label>FD Allocation Capital</label>
+                    <input type="number" id="fd-amount" placeholder="CEN 500.00">
+                </div>
+                <div class="form-group">
+                    <label>Maturation Term Duration</label>
+                    <select id="fd-duration" onchange="calculateFdPreview()">
+                        <option value="1">1 Week Time-Lock (6% Return)</option>
+                        <option value="2">2 Weeks Time-Lock (8% Return)</option>
+                        <option value="3">3 Weeks Time-Lock (10% Return)</option>
+                        <option value="4">4 Weeks Time-Lock (12% Return)</option>
+                        <option value="5">5 Weeks Time-Lock (14% Return)</option>
+                    </select>
+                </div>
+                <div id="fd-preview" style="font-size:11px; color:#aaa; margin-bottom:10px; font-family:monospace;">Yield Estimation: Pending Input...</div>
+                <button class="btn-green" onclick="initializeFixedDeposit()">EMIT TIME-LOCKED FD</button>
+            </div>
             
-            <div style="background:#161616; padding:10px; border-radius:8px; display:flex; gap:10px; margin-bottom:12px;">
-                <button class="btn-amber" style="margin:0; padding:8px; font-size:11px;" onclick="handleRdVaultExchange('deposit')">Vault Topup</button>
-                <button class="btn-blue" style="margin:0; padding:8px; font-size:11px;" onclick="handleRdVaultExchange('withdraw')">Vault Withdraw</button>
+            <div>
+                <label style="margin-top:15px;">Active Fixed Deposit Matrix Ledger</label>
+                <div id="fd-ledger" class="ledger-box"></div>
             </div>
-
-            <div class="form-group">
-                <label>Cycle Increment Amount (CEN)</label>
-                <input type="number" id="rd-cycle-amount" placeholder="e.g. 200">
-            </div>
-            <div class="form-group">
-                <label>Target Execution Lifespan (Weeks)</label>
-                <input type="number" id="rd-lifespan-weeks" placeholder="Min: 2 Weeks" min="2" value="2">
-            </div>
-            <button class="btn-green" onclick="initializeRecurringDeposit()">VERIFY & START RD CONTRACT</button>
         </div>
 
-        <div>
-            <label style="margin-top:15px;">Active Automated RD Contracts</label>
-            <div id="rd-ledger" class="ledger-box"></div>
+        <!-- Tier 3: Recurring Deposits (RD) -->
+        <div class="card">
+            <div>
+                <h2>3️⃣ Recurring Deposits Engine</h2>
+                
+                <div class="form-group">
+                    <label>Cycle Increment Amount (CEN)</label>
+                    <input type="number" id="rd-cycle-amount" placeholder="e.g. 200">
+                </div>
+                <div class="form-group">
+                    <label>Target Execution Lifespan (Weeks)</label>
+                    <input type="number" id="rd-lifespan-weeks" placeholder="Min: 2 Weeks" min="2" value="2">
+                </div>
+                <button class="btn-green" onclick="initializeRecurringDeposit()">VERIFY & START RD CONTRACT</button>
+            </div>
+
+            <div>
+                <label style="margin-top:15px;">Active Automated RD Contracts</label>
+                <div id="rd-ledger" class="ledger-box"></div>
+            </div>
         </div>
+
     </div>
-
 </div>
 
 <script>
@@ -197,14 +223,12 @@
             updates['balance'] = Math.round((currentBankBalance - amount) * 100) / 100;
             
             sbBal += amount;
-            // First time deposit sets benchmark baseline floor directly
             if (sbBal - amount === 0) sbFloor = amount; 
         } else if (actionType === 'withdraw') {
             if (sbBal < amount) return alert("Withdrawal demand exceeds available savings balance framework.");
             updates['balance'] = Math.round((currentBankBalance + amount) * 100) / 100;
             
             sbBal -= amount;
-            // Floor tracks lowest point balance dips to inside the 7 day period
             if (sbBal < sbFloor) sbFloor = sbBal;
         }
 
@@ -234,7 +258,7 @@
         const capital = parseFloat(amtField.value) || 0;
         const weeks = parseInt(document.getElementById('fd-duration').value) || 1;
 
-        if (capital < 500) return alert("Minimum commitment required to issue Fixed Deposit is CEN 500.");
+        if (capital <= 0) return alert("Please enter a valid amount to launch a Fixed Deposit.");
         if (currentBankBalance < capital) return alert("Deficit identified in liquid bank balance configuration.");
 
         const now = Date.now();
@@ -293,7 +317,7 @@
     // 3️⃣ RECURRING DEPOSITS CORE FUNCTIONAL ARCHITECTURE
     // ==========================================
     async function handleRdVaultExchange(action) {
-        const rawInput = prompt(`Enter capital payload value to ${action} against RD Vault balance structure:`);
+        const rawInput = prompt(`Enter capital payload value to ${action} against RD Bank balance structure:`);
         const targetVal = parseFloat(rawInput) || 0;
         if (targetVal <= 0) return;
 
@@ -303,7 +327,7 @@
             updates['balance'] = Math.round((currentBankBalance - targetVal) * 100) / 100;
             updates['rd_vault_balance'] = Math.round((rdVaultBalance + targetVal) * 100) / 100;
         } else {
-            if (rdVaultBalance < targetVal) return alert("Request matches more than total localized RD vault reserves.");
+            if (rdVaultBalance < targetVal) return alert("Request matches more than total localized RD bank reserves.");
             updates['balance'] = Math.round((currentBankBalance + targetVal) * 100) / 100;
             updates['rd_vault_balance'] = Math.round((rdVaultBalance - targetVal) * 100) / 100;
         }
@@ -323,7 +347,7 @@
         const minimumPreValidationThreshold = aggregateLiabilityCost * 0.50;
 
         if (rdVaultBalance < minimumPreValidationThreshold) {
-            return alert(`Verification Failed: RD Vault Ledger needs at least 50% of total expected commitment (Required: CEN ${minimumPreValidationThreshold.toFixed(2)}). Please perform a Vault Topup.`);
+            return alert(`Verification Failed: RD Bank needs at least 50% of total expected commitment (Required: CEN ${minimumPreValidationThreshold.toFixed(2)}). Please perform a Topup.`);
         }
 
         const now = Date.now();
@@ -349,6 +373,10 @@
         alert("Recurring deposit validation protocol cleared. Contract initialized.");
     }
 
+    function dismissAlertBanner() {
+        document.getElementById('topup-alert-banner').style.display = 'none';
+    }
+
 
     // ==========================================
     // CHRONOLOGICAL CHRONOS TICK ENGINE (BACKGROUND LOGIC)
@@ -357,6 +385,7 @@
         const now = Date.now();
         let updates = {};
         let databaseChangeRequired = false;
+        let showGraceNotification = false;
 
         // A. Process Savings Bank Weekly Returns (7 Day Loops)
         const sb = entireDataCache.savings_bank || {};
@@ -388,17 +417,18 @@
 
         // C. Process Automated Recurring Deposits Engines (Every 2-Day Deductions)
         const allRds = entireDataCache.recurring_deposits || {};
-        // Use fresh local variables since loop updates can accumulate over multiple objects
         let computedRdVaultBalance = rdVaultBalance; 
 
         Object.entries(allRds).forEach(([key, rd]) => {
             if (rd.status === "PROCESSING") {
-                // Check if a cycle extraction period is due
+                if (rd.grace_period_active) {
+                    showGraceNotification = true;
+                }
+
                 if (now >= rd.next_expected_deduction_timestamp) {
                     let costPerTrigger = rd.cycle_amount;
 
                     if (computedRdVaultBalance >= costPerTrigger) {
-                        // Success Loop
                         databaseChangeRequired = true;
                         computedRdVaultBalance -= costPerTrigger;
                         let updatedCyclesCount = rd.completed_cycles + 1;
@@ -410,20 +440,18 @@
                         updates[`recurring_deposits/${key}/next_expected_deduction_timestamp`] = now + (2 * 24 * 60 * 60 * 1000);
                         updates[`recurring_deposits/${key}/grace_period_active`] = false;
 
-                        // Check termination maturity conditions
                         if (updatedCyclesCount >= rd.total_expected_cycles) {
                             let endYieldBonus = combinedCapital * 0.15;
                             computedRdVaultBalance += (combinedCapital + endYieldBonus);
                             updates[`recurring_deposits/${key}/status`] = "SUCCESSFULLY_MATURED";
                         }
                     } else {
-                        // Deficit Protocol triggered: initiate or track 24H grace window
                         if (!rd.grace_period_active) {
                             databaseChangeRequired = true;
                             updates[`recurring_deposits/${key}/grace_period_active`] = true;
                             updates[`recurring_deposits/${key}/grace_expiry_timestamp`] = now + (24 * 60 * 60 * 1000);
+                            showGraceNotification = true;
                         } else if (now >= rd.grace_expiry_timestamp) {
-                            // Grace has elapsed completely and remains unpaid: Liquidate Contract immediately with 10% penalty deduction
                             databaseChangeRequired = true;
                             let penaltyCutValue = rd.accumulated_capital * 0.10;
                             let refundCapitalPayout = rd.accumulated_capital - penaltyCutValue;
@@ -436,8 +464,11 @@
             }
         });
 
+        // Toggle Topup Notification display state dynamically based on active account alerts
+        document.getElementById('topup-alert-banner').style.display = showGraceNotification ? 'block' : 'none';
+
         if (databaseChangeRequired) {
-            if (updates.hasOwnProperty('rd_vault_balance') || computedRdVaultBalance !== rdVaultBalance) {
+            if (computedRdVaultBalance !== rdVaultBalance) {
                 updates['rd_vault_balance'] = Math.round(computedRdVaultBalance * 100) / 100;
             }
             await db.ref(`users/${userId}`).update(updates);

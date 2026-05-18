@@ -3,410 +3,416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEN SAVE SYSTEM & DEPOSIT REGISTRY</title>
+    <title>Centrol Bank Terminal</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root {
-            --bg-main: #020203;
-            --bg-surface: #090a0f;
-            --bg-card: #0e1017;
-            --bg-input: #040508;
-            --border-glow: rgba(0, 210, 255, 0.15);
-            --border-muted: #171b26;
+            --bg-base: #0a0b0d;
+            --bg-surface: #13151a;
+            --bg-card: #1c1f26;
+            --bg-input: #090a0c;
             
-            --accent-blue: #00d2ff;
-            --accent-green: #00ff85;
-            --accent-amber: #ffb700;
-            --accent-red: #ff2a4b;
+            --color-primary: #3b82f6;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
             
-            --text-primary: #ffffff;
-            --text-secondary: #7e89a0;
-            --text-muted: #434c5e;
-            
-            --glow-green: rgba(0, 255, 133, 0.03);
-            --glow-blue: rgba(0, 210, 255, 0.03);
-            --glow-amber: rgba(255, 183, 0, 0.03);
+            --text-main: #ffffff;
+            --text-sub: #9ca3af;
+            --text-muted: #6b7280;
+            --border: #262a35;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body { 
-            background: var(--bg-main); 
-            color: var(--text-primary); 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg-base); 
+            color: var(--text-main); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             margin: 0; 
-            padding: 24px; 
-            display: flex; 
-            justify-content: center;
+            padding: 0;
             min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .system-container {
-            width: 100%;
-            max-width: 1200px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
         }
 
-        /* Top Hero Header Terminal */
-        .terminal-header {
-            background: linear-gradient(135deg, var(--bg-surface) 0%, #050609 100%);
-            border: 1px solid var(--border-muted);
-            border-top: 3px solid var(--accent-blue);
-            border-radius: 16px;
-            padding: 24px;
+        /* Responsive Global Container */
+        .app-container {
+            width: 100%;
+            max-width: 600px; /* Locked to mobile layout sizes even on desktop */
+            margin: 0 auto;
+            padding: 16px 16px 80px 16px; /* Bottom padding accounts for mobile navbar navigation */
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Clean Header */
+        .app-header {
+            padding: 12px 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            flex-wrap: wrap;
-            gap: 20px;
         }
-
-        .brand-title h1 {
+        .app-header h1 {
+            font-size: 20px;
+            font-weight: 700;
             margin: 0;
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text-primary);
-        }
-        .brand-title p {
-            margin: 4px 0 0 0;
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .balance-master-display {
-            text-align: right;
-        }
-        .balance-master-display .label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .balance-master-display .value {
-            font-size: 32px;
-            font-weight: 900;
-            font-family: 'SF Mono', Consolas, monospace;
             letter-spacing: -0.5px;
-            text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+        }
+        .app-header p {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin: 2px 0 0 0;
         }
 
-        /* God-Tier Segmented Tab Navigation Array */
-        .navigation-matrix {
-            display: flex;
+        /* Premium Account Overview Card */
+        .balance-hero {
             background: var(--bg-surface);
-            border: 1px solid var(--border-muted);
-            padding: 6px;
-            border-radius: 12px;
-            gap: 6px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-        .tab-trigger {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 14px;
+        .balance-hero .label {
             font-size: 12px;
-            font-weight: 700;
+            color: var(--text-sub);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            font-weight: 500;
         }
-        .tab-trigger:hover {
-            color: var(--text-primary);
-            background: rgba(255,255,255,0.02);
+        .balance-hero .value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-top: 6px;
+            letter-spacing: -1px;
         }
-        .tab-trigger.active-tab {
-            color: #000;
-            font-weight: 800;
-        }
-        .tab-trigger[data-target="vault-panel"].active-tab { background: var(--accent-blue); box-shadow: 0 4px 20px rgba(0, 210, 255, 0.25); }
-        .tab-trigger[data-target="fd-panel"].active-tab { background: var(--accent-green); box-shadow: 0 4px 20px rgba(0, 255, 133, 0.25); }
-        .tab-trigger[data-target="rd-panel"].active-tab { background: var(--accent-amber); box-shadow: 0 4px 20px rgba(255, 183, 0, 0.25); }
 
-        /* Dynamic Engine Panels */
-        .engine-panel {
-            display: none;
+        /* Compact Segment Navigation (Sticky Mobile Bottom Bar) */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: var(--bg-surface);
-            border: 1px solid var(--border-muted);
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: panelFadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
         }
-        .engine-panel.active-panel {
-            display: block;
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            width: 33.33%;
+            padding: 6px 0;
+            transition: color 0.2s ease;
+        }
+        .nav-item .icon {
+            font-size: 18px;
+        }
+        .nav-item.active {
+            color: var(--color-primary);
         }
 
-        @keyframes panelFadeIn {
-            from { opacity: 0; transform: translateY(8px); }
+        /* Screen Engine States */
+        .app-screen {
+            display: none;
+            animation: mobileFadeIn 0.2s ease-out;
+        }
+        .app-screen.active {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        @keyframes mobileFadeIn {
+            from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Modern Workspace Split Layout */
-        .workspace-split {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 32px;
-        }
-
-        @media (max-width: 900px) {
-            .workspace-split { grid-template-columns: 1fr; gap: 24px; }
-            .terminal-header { flex-direction: column; text-align: center; }
-            .balance-master-display { text-align: center; }
-            .navigation-matrix { flex-direction: column; }
-        }
-
-        /* Modular UI Components */
-        .sub-display-card {
-            background: rgba(4, 5, 8, 0.6);
-            border: 1px solid var(--border-muted);
-            border-radius: 12px;
+        /* Clean Functional Section Cards */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
             padding: 20px;
-            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: var(--text-main);
+        }
+
+        /* Metric Rows */
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .metric-row:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .metric-row:first-of-type {
+            padding-top: 0;
+        }
+        .metric-label {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+        .metric-value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        /* Input Controls */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        input, select {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+        input:focus, select:focus {
+            border-color: var(--color-primary);
+        }
+
+        /* Unified Clean Mobile Buttons */
+        .btn-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button.btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        button.btn:active {
+            opacity: 0.8;
+        }
+        .btn-primary { background: var(--color-primary); color: #fff; }
+        .btn-success { background: var(--color-success); color: #fff; }
+        .btn-warning { background: var(--color-warning); color: #fff; }
+        .btn-outline { background: transparent; color: var(--text-main); border: 1px solid var(--border); }
+
+        /* Scrollable Ledger Area */
+        .ledger-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .ledger-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+        .ledger-info h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .ledger-info p {
+            margin: 4px 0 0 0;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
 
-        .form-group { margin-bottom: 18px; }
-        label { display: block; font-size: 11px; color: var(--text-secondary); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        input, select { 
-            width: 100%; 
-            padding: 14px; 
-            background: var(--bg-input); 
-            border: 1px solid var(--border-muted); 
-            color: var(--text-primary); 
-            border-radius: 10px; 
-            box-sizing: border-box; 
-            font-size: 14px; 
-            font-family: inherit;
-            outline: none; 
-            transition: all 0.2s ease;
-        }
-        input:focus, select:focus { border-color: rgba(255,255,255,0.2); }
-        
-        .btn-group { display: flex; gap: 12px; margin-top: 12px; }
-
-        button.action-btn { 
-            width: 100%; 
-            border: none; 
-            padding: 14px; 
-            border-radius: 10px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            font-size: 12px; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.2s ease; 
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
+        /* Banner Notification System */
+        .banner-alert {
+            display: none;
+            background: #2a1418;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #fca5a5;
         }
         
-        .btn-blue-outline { background: transparent; color: var(--accent-blue); border: 1px solid rgba(0,210,255,0.2); }
-        .btn-blue-outline:hover { background: rgba(0,210,255,0.06); border-color: var(--accent-blue); }
-        .btn-green-solid { background: var(--accent-green); color: #000; }
-        .btn-green-solid:hover { background: #26ff96; transform: translateY(-1px); }
-        .btn-amber-solid { background: var(--accent-amber); color: #000; }
-        .btn-amber-solid:hover { background: #ffc426; transform: translateY(-1px); }
-        .btn-red-outline { background: transparent; color: var(--accent-red); border: 1px solid rgba(255,42,75,0.2); }
-        .btn-red-outline:hover { background: var(--accent-red); color: #fff; }
-
-        /* Unified Ledger Data Lists */
-        .ledger-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .ledger-box { max-height: 340px; overflow-y: auto; padding-right: 4px; }
-        .ledger-box::-webkit-scrollbar { width: 4px; }
-        .ledger-box::-webkit-scrollbar-thumb { background: var(--border-muted); border-radius: 10px; }
-        
-        .ledger-item { 
-            background: var(--bg-card); 
-            border: 1px solid var(--border-muted); 
-            padding: 16px; 
-            border-radius: 10px; 
-            margin-bottom: 12px; 
-        }
-        .ledger-row { display: flex; justify-content: space-between; align-items: center; }
-
-        /* Alert System Banner */
-        .topup-popup { 
-            display: none; 
-            background: #190a0f; 
-            border: 1px solid rgba(255,42,75,0.25); 
-            border-radius: 12px; 
-            padding: 16px 20px; 
-            margin-bottom: 4px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: panelFadeIn 0.3s ease;
-        }
-        
-        .accent-green { color: var(--accent-green); }
-        .accent-red { color: var(--accent-red); }
-        .accent-blue { color: var(--accent-blue); }
-        .accent-amber { color: var(--accent-amber); }
-        
-        hr { border: 0; border-top: 1px solid var(--border-muted); margin: 24px 0; }
-        h2 { margin: 0 0 20px 0; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; }
+        .text-success { color: var(--color-success); }
+        .text-warning { color: var(--color-warning); }
+        .text-danger { color: var(--color-danger); }
+        .text-primary { color: var(--color-primary); }
     </style>
 </head>
 <body>
 
-<div class="system-container">
+<div class="app-container">
 
-    <!-- Emergency Grace Period Alert Banner -->
-    <div id="topup-alert-banner" class="topup-popup">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <div style="flex: 1; min-width: 280px;">
-                <strong class="accent-red" style="font-size: 13px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">⚠️ SYSTEM LIABILITY WARNING</strong>
-                <div style="font-size: 12px; margin-top: 4px; color: var(--text-secondary); line-height: 1.5;">An active RD contract has breached its requirement cycle and is currently holding in a 24-hour grace window. Process an emergency topup immediately to prevent 10% penalty liquidation.</div>
+    <!-- Emergency Dynamic Alert Banner -->
+    <div id="topup-alert-banner" class="banner-alert">
+        <div style="font-weight: 700; margin-bottom: 2px;">⚠️ RD REQUIREMENT OVERDUE</div>
+        An active RD contract has missed its automatic payment loop. Add funds to the RD Vault immediately to prevent liquidation penalties.
+    </div>
+
+    <!-- Application Identity Header -->
+    <div class="app-header">
+        <div>
+            <h1>Centrol Save</h1>
+            <p>Unified Management Protocol</p>
+        </div>
+    </div>
+
+    <!-- Master Asset Valuation Hero Card -->
+    <div class="balance-hero">
+        <div class="label">Total Liquid Capital</div>
+        <div id="display-current-bal" class="value">CEN 0.00</div>
+    </div>
+
+    <!-- SCREEN 1: VAULT MANAGEMENT -->
+    <div id="screen-vault" class="app-screen active">
+        <!-- Savings Bank Core -->
+        <div class="card">
+            <h3 class="card-title">Savings Account</h3>
+            <div class="metric-row">
+                <span class="metric-label">Available Balance</span>
+                <span id="sb-balance" class="metric-value text-success">CEN 0.00</span>
             </div>
-            <div>
-                <button class="action-btn btn-red-outline" style="width: auto; padding: 8px 16px; font-size: 11px;" onclick="dismissAlertBanner()">Acknowledge</button>
+            <div class="metric-row" style="margin-bottom: 16px;">
+                <span class="metric-label">Untouched Ceiling Floor</span>
+                <span id="sb-untouched" class="metric-value">CEN 0.00</span>
+            </div>
+            
+            <div class="form-group">
+                <input type="number" id="sb-amount" placeholder="Enter Transaction Amount">
+            </div>
+            <div class="btn-stack">
+                <button class="btn btn-success" onclick="handleSavingsTransaction('deposit')">Deposit to Savings</button>
+                <button class="btn btn-outline" onclick="handleSavingsTransaction('withdraw')">Withdraw Assets</button>
+            </div>
+        </div>
+
+        <!-- RD Bank Vault Allocation -->
+        <div class="card">
+            <h3 class="card-title">RD Funding Vault</h3>
+            <div class="metric-row" style="margin-bottom: 16px;">
+                <span class="metric-label">Vault Balance</span>
+                <span id="display-rd-vault-bal" class="metric-value text-warning">CEN 0.00</span>
+            </div>
+            
+            <div class="form-group">
+                <input type="number" id="rd-vault-amount" placeholder="Enter Exchange Amount">
+            </div>
+            <div class="btn-stack">
+                <button class="btn btn-warning" onclick="handleRdVaultExchange('deposit')">Topup RD Vault</button>
+                <button class="btn btn-outline" onclick="handleRdVaultExchange('withdraw')">Withdraw from Vault</button>
             </div>
         </div>
     </div>
 
-    <!-- Top Master Account Terminal Overview -->
-    <div class="terminal-header">
-        <div class="brand-title">
-            <h1>CEN Save Management Terminal</h1>
-            <p>Unified Registry Framework & Asset Protocol</p>
-        </div>
-        <div class="balance-master-display">
-            <div class="label">Liquid Account Matrix Capital</div>
-            <div id="display-current-bal" class="value accent-blue">CEN 0.00</div>
-        </div>
-    </div>
-
-    <!-- Segmented Segment Control Switcher Array -->
-    <div class="navigation-matrix">
-        <button class="tab-trigger active-tab" data-target="vault-panel">💼 Vault Registry</button>
-        <button class="tab-trigger" data-target="fd-panel">🔒 Fixed Deposits</button>
-        <button class="tab-trigger" data-target="rd-panel">⏳ Recurring Deposits</button>
-    </div>
-
-    <!-- PANEL 1: LIQUID VAULT REGISTRY (SAVINGS & RD VAULT) -->
-    <div id="vault-panel" class="engine-panel active-panel">
-        <div class="workspace-split">
-            <!-- Left Config Desk -->
-            <div>
-                <h2>Savings Allocation Core</h2>
-                <div class="sub-display-card" style="border-left: 3px solid var(--accent-green); background: var(--glow-green);">
-                    <div>
-                        <label style="margin:0;">Savings Equity Balance</label>
-                        <div id="sb-balance" style="font-size: 24px; font-weight: 800; font-family: 'SF Mono', monospace; margin-top: 4px;" class="accent-green">CEN 0.00</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <label style="margin:0;">Untouched Floor Floor</label>
-                        <div id="sb-untouched" style="font-size: 14px; font-weight: 700; font-family: 'SF Mono', monospace; margin-top: 4px; color: #fff;">CEN 0.00</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Transaction Amount (CEN)</label>
-                    <input type="number" id="sb-amount" placeholder="0.00" min="1">
-                </div>
-                <div class="btn-group">
-                    <button class="action-btn btn-green-solid" onclick="handleSavingsTransaction('deposit')">Deposit to Savings</button>
-                    <button class="action-btn btn-blue-outline" onclick="handleSavingsTransaction('withdraw')">Withdraw Assets</button>
-                </div>
+    <!-- SCREEN 2: FIXED DEPOSITS -->
+    <div id="screen-fd" class="app-screen">
+        <div class="card">
+            <h3 class="card-title">Open Fixed Deposit</h3>
+            <div class="form-group">
+                <label>Capital Allocation</label>
+                <input type="number" id="fd-amount" placeholder="CEN 0.00">
             </div>
-
-            <!-- Right Config Desk -->
-            <div style="border-left: 1px solid var(--border-muted); padding-left: 32px;">
-                <h2>RD Bank Vault Line</h2>
-                <div class="sub-display-card" style="border-left: 3px solid var(--accent-amber); background: var(--glow-amber);">
-                    <div>
-                        <label style="margin:0;">RD Bank Reserved Capital</label>
-                        <div id="display-rd-vault-bal" style="font-size: 24px; font-weight: 800; font-family: 'SF Mono', monospace; margin-top: 4px;" class="accent-amber">CEN 0.00</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Exchange Volume Amount (CEN)</label>
-                    <input type="number" id="rd-vault-amount" placeholder="0.00" min="1">
-                </div>
-                <div class="btn-group">
-                    <button class="action-btn btn-amber-solid" onclick="handleRdVaultExchange('deposit')">Topup RD Vault</button>
-                    <button class="action-btn btn-blue-outline" onclick="handleRdVaultExchange('withdraw')">Withdraw from Vault</button>
-                </div>
+            <div class="form-group">
+                <label>Maturity Timeline Lock</label>
+                <select id="fd-duration" onchange="calculateFdPreview()">
+                    <option value="1">1 Week Time-Lock (6% Return)</option>
+                    <option value="2">2 Weeks Time-Lock (8% Return)</option>
+                    <option value="3">3 Weeks Time-Lock (10% Return)</option>
+                    <option value="4">4 Weeks Time-Lock (12% Return)</option>
+                    <option value="5">5 Weeks Time-Lock (14% Return)</option>
+                </select>
             </div>
+            <div id="fd-preview" style="font-size: 13px; color: var(--text-sub); margin-bottom: 16px; padding: 4px 0;">Yield Preview: Awaiting amount parameter...</div>
+            <button class="btn btn-success" onclick="initializeFixedDeposit()">Lock & Initialize FD</button>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 32px; text-transform: uppercase; letter-spacing: 0.5px;">
-            🛡️ 7-Day loops apply a 3% yield reward automatically to untouched benchmark floor metrics.
+
+        <div class="card">
+            <h3 class="card-title">Active Fixed Deposits</h3>
+            <div id="fd-ledger" class="ledger-box"></div>
         </div>
     </div>
 
-    <!-- PANEL 2: FIXED DEPOSITS -->
-    <div id="fd-panel" class="engine-panel">
-        <div class="workspace-split">
-            <div>
-                <h2>Emit New Fixed Deposit Contract</h2>
-                <div class="form-group">
-                    <label>Allocation Capital Investment</label>
-                    <input type="number" id="fd-amount" placeholder="CEN 0.00">
-                </div>
-                <div class="form-group">
-                    <label>Maturation Maturity Term Term</label>
-                    <select id="fd-duration" onchange="calculateFdPreview()">
-                        <option value="1">1 Week Time-Lock (6% Return)</option>
-                        <option value="2">2 Weeks Time-Lock (8% Return)</option>
-                        <option value="3">3 Weeks Time-Lock (10% Return)</option>
-                        <option value="4">4 Weeks Time-Lock (12% Return)</option>
-                        <option value="5">5 Weeks Time-Lock (14% Return)</option>
-                    </select>
-                </div>
-                <div id="fd-preview" style="font-size: 12px; color: var(--text-secondary); margin: 8px 0 24px 0; font-family: 'SF Mono', monospace; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; border: 1px dashed var(--border-muted);">Yield Estimation: Awaiting Parameter Baseline...</div>
-                <button class="action-btn btn-green-solid" onclick="initializeFixedDeposit()">Lock & Emit FD Contract</button>
+    <!-- SCREEN 3: RECURRING DEPOSITS -->
+    <div id="screen-rd" class="app-screen">
+        <div class="card">
+            <h3 class="card-title">Launch Automated RD Protocol</h3>
+            <div class="form-group">
+                <label>Cycle Installment Amount</label>
+                <input type="number" id="rd-cycle-amount" placeholder="e.g. 200">
             </div>
+            <div class="form-group">
+                <label>Target Lifespan Duration (Weeks)</label>
+                <input type="number" id="rd-lifespan-weeks" placeholder="Minimum: 2 Weeks" min="2" value="2">
+            </div>
+            <button class="btn btn-warning" onclick="initializeRecurringDeposit()">Verify & Start RD Contract</button>
+        </div>
 
-            <div class="ledger-container">
-                <h2>Active Fixed Deposit Matrix Ledger</h2>
-                <div id="fd-ledger" class="ledger-box"></div>
-            </div>
+        <div class="card">
+            <h3 class="card-title">Active RD Protocols</h3>
+            <div id="rd-ledger" class="ledger-box"></div>
         </div>
     </div>
 
-    <!-- PANEL 3: RECURRING DEPOSITS -->
-    <div id="rd-panel" class="engine-panel">
-        <div class="workspace-split">
-            <div>
-                <h2>Deploy Automated RD Protocol</h2>
-                <div class="form-group">
-                    <label>Cycle Step Increment Amount (CEN)</label>
-                    <input type="number" id="rd-cycle-amount" placeholder="e.g. 200">
-                </div>
-                <div class="form-group">
-                    <label>Target Lifespan Duration Horizon (Weeks)</label>
-                    <input type="number" id="rd-lifespan-weeks" placeholder="Minimum: 2 Weeks" min="2" value="2">
-                </div>
-                <button class="action-btn btn-amber-solid" onclick="initializeRecurringDeposit()">Verify & Start RD Contract</button>
-            </div>
+</div>
 
-            <div class="ledger-container">
-                <h2>Active Automated RD Protocols</h2>
-                <div id="rd-ledger" class="ledger-box"></div>
-            </div>
-        </div>
-    </div>
-
+<!-- Fixed App Bottom Navigation Dock for Mobile Devices -->
+<div class="mobile-nav">
+    <button class="nav-item active" data-target="screen-vault">
+        <span class="icon">💼</span>
+        <span>Vaults</span>
+    </button>
+    <button class="nav-item" data-target="screen-fd">
+        <span class="icon">🔒</span>
+        <span>Fixed</span>
+    </button>
+    <button class="nav-item" data-target="screen-rd">
+        <span class="icon">⏳</span>
+        <span>Recurring</span>
+    </button>
 </div>
 
 <script>
@@ -419,15 +425,16 @@
     let rdVaultBalance = 0;
     let entireDataCache = {};
 
-    // Tab Navigation Logic
-    document.querySelectorAll('.tab-trigger').forEach(trigger => {
-        trigger.addEventListener('click', () => {
-            document.querySelectorAll('.tab-trigger').forEach(t => t.classList.remove('active-tab'));
-            document.querySelectorAll('.engine-panel').forEach(p => p.classList.remove('active-panel'));
+    // Tab Interface Engine Setup
+    document.querySelectorAll('.nav-item').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
             
-            trigger.classList.add('active-tab');
-            const target = trigger.getAttribute('data-target');
-            document.getElementById(target).classList.add('active-panel');
+            button.classList.add('active');
+            const target = button.getAttribute('data-target');
+            document.getElementById(target).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 
@@ -443,9 +450,6 @@
         await evaluateChronologicalSaveEngines();
     });
 
-    // ==========================================
-    // 1️⃣ SAVINGS BANK CORE FUNCTIONAL ARCHITECTURE
-    // ==========================================
     function renderSavingsBankSection() {
         const sb = entireDataCache.savings_bank || { balance: 0, untouched_floor: 0 };
         document.getElementById('sb-balance').innerText = `CEN ${parseFloat(sb.balance).toFixed(2)}`;
@@ -455,24 +459,21 @@
     async function handleSavingsTransaction(actionType) {
         const amtField = document.getElementById('sb-amount');
         const amount = parseFloat(amtField.value) || 0;
-        if (amount <= 0) return alert("Please specify a valid financial transaction quantity.");
+        if (amount <= 0) return alert("Please specify a valid transaction quantity.");
 
         let sb = entireDataCache.savings_bank || { balance: 0, untouched_floor: 0, cycle_start_time: Date.now() };
         let sbBal = parseFloat(sb.balance) || 0;
         let sbFloor = parseFloat(sb.untouched_floor) || 0;
-        
         let updates = {};
 
         if (actionType === 'deposit') {
             if (currentBankBalance < amount) return alert("Insufficient core liquid balance.");
             updates['balance'] = Math.round((currentBankBalance - amount) * 100) / 100;
-            
             sbBal += amount;
             if (sbBal - amount === 0) sbFloor = amount; 
         } else if (actionType === 'withdraw') {
-            if (sbBal < amount) return alert("Withdrawal demand exceeds available savings balance framework.");
+            if (sbBal < amount) return alert("Withdrawal demand exceeds available savings balance.");
             updates['balance'] = Math.round((currentBankBalance + amount) * 100) / 100;
-            
             sbBal -= amount;
             if (sbBal < sbFloor) sbFloor = sbBal;
         }
@@ -485,16 +486,12 @@
         amtField.value = "";
     }
 
-
-    // ==========================================
-    // 2️⃣ FIXED DEPOSITS CORE FUNCTIONAL ARCHITECTURE
-    // ==========================================
     function calculateFdPreview() {
         const amt = parseFloat(document.getElementById('fd-amount').value) || 0;
         const weeks = parseInt(document.getElementById('fd-duration').value) || 1;
         const rate = 6 + ((weeks - 1) * 2); 
         const yieldAmt = amt * (rate / 100);
-        document.getElementById('fd-preview').innerText = `Yield Estimation: +CEN ${yieldAmt.toFixed(2)} (${rate}% Return Matrix)`;
+        document.getElementById('fd-preview').innerText = `Yield Preview: +CEN ${yieldAmt.toFixed(2)} (${rate}% Return)`;
     }
     document.getElementById('fd-amount').addEventListener('input', calculateFdPreview);
 
@@ -503,8 +500,8 @@
         const capital = parseFloat(amtField.value) || 0;
         const weeks = parseInt(document.getElementById('fd-duration').value) || 1;
 
-        if (capital <= 0) return alert("Please enter a valid amount to launch a Fixed Deposit.");
-        if (currentBankBalance < capital) return alert("Deficit identified in liquid bank balance configuration.");
+        if (capital <= 0) return alert("Enter a valid amount to open a Fixed Deposit.");
+        if (currentBankBalance < capital) return alert("Insufficient liquid bank balance.");
 
         const now = Date.now();
         const durationMs = weeks * 7 * 24 * 60 * 60 * 1000;
@@ -524,7 +521,7 @@
 
         await db.ref(`users/${userId}`).update(updates);
         amtField.value = "";
-        alert("Fixed Deposit safely executed and registered in centralized memory.");
+        alert("Fixed Deposit safely executed and registered.");
     }
 
     async function signalManualFdMaturity(fdKey) {
@@ -536,43 +533,36 @@
             [`fixed_deposits/${fdKey}/status`]: "MATURED_CLAIMED"
         };
         await db.ref(`users/${userId}`).update(updates);
-        alert(`Fixed deposit completed! CEN ${returnAmount.toFixed(2)} has shifted back to liquid balance parameters.`);
+        alert(`Fixed deposit completed! CEN ${returnAmount.toFixed(2)} has been credited.`);
     }
 
     async function triggerEmergencyFdBreak(fdKey) {
         const fd = entireDataCache.fixed_deposits[fdKey];
-        const targetConfirmationValue = fd.principal.toString();
+        const targetValue = fd.principal.toString();
+        const verifyInput = prompt(`⚠️ WARNING: Breaking this contract completely forfeits all interest yields.\nTo verify liquidation, type the principal amount (${targetValue}):`);
         
-        const verificationInput = prompt(`CRITICAL OPERATIONS INVOCATION:\nBreaking this contract completely strips all interest benefits.\nTo verify liquidation, type the exact principal amount (${targetConfirmationValue}):`);
-        
-        if (verificationInput !== targetConfirmationValue) {
-            return alert("Verification mismatch. Emergency termination sequence halted.");
-        }
+        if (verifyInput !== targetValue) return alert("Verification mismatch. Interrupted.");
 
         let updates = {
             [`balance`]: Math.round((currentBankBalance + fd.principal) * 100) / 100,
             [`fixed_deposits/${fdKey}/status`]: "LIQUIDATED_PREMATURE"
         };
         await db.ref(`users/${userId}`).update(updates);
-        alert("Contract completely broken. Original investment principle recovered with 0% absolute yields.");
+        alert("Contract terminated. Investment principle recovered with 0% absolute yield.");
     }
 
-
-    // ==========================================
-    // 3️⃣ RECURRING DEPOSITS CORE FUNCTIONAL ARCHITECTURE
-    // ==========================================
     async function handleRdVaultExchange(action) {
         const amtField = document.getElementById('rd-vault-amount');
         const targetVal = parseFloat(amtField.value) || 0;
-        if (targetVal <= 0) return alert("Please specify a valid financial transaction quantity.");
+        if (targetVal <= 0) return alert("Please specify a valid transaction quantity.");
 
         let updates = {};
         if (action === 'deposit') {
-            if (currentBankBalance < targetVal) return alert("Insufficient central liquid asset pool.");
+            if (currentBankBalance < targetVal) return alert("Insufficient central liquid balance.");
             updates['balance'] = Math.round((currentBankBalance - targetVal) * 100) / 100;
             updates['rd_vault_balance'] = Math.round((rdVaultBalance + targetVal) * 100) / 100;
         } else {
-            if (rdVaultBalance < targetVal) return alert("Request matches more than total localized RD bank reserves.");
+            if (rdVaultBalance < targetVal) return alert("Withdrawal request exceeds total RD vault balance.");
             updates['balance'] = Math.round((currentBankBalance + targetVal) * 100) / 100;
             updates['rd_vault_balance'] = Math.round((rdVaultBalance - targetVal) * 100) / 100;
         }
@@ -584,16 +574,14 @@
         const cycleAmt = parseFloat(document.getElementById('rd-cycle-amount').value) || 0;
         const lifespanWeeks = parseInt(document.getElementById('rd-lifespan-weeks').value) || 2;
 
-        if (cycleAmt <= 0 || lifespanWeeks < 2) {
-            return alert("Verify configuration settings: Lifespan minimum standard is 2 Weeks.");
-        }
+        if (cycleAmt <= 0 || lifespanWeeks < 2) return alert("Configuration error: Lifespan minimum standard is 2 Weeks.");
 
-        const standardFailsafeCyclesCount = (lifespanWeeks * 7) / 2; 
-        const aggregateLiabilityCost = standardFailsafeCyclesCount * cycleAmt;
-        const minimumPreValidationThreshold = aggregateLiabilityCost * 0.50;
+        const standardCyclesCount = (lifespanWeeks * 7) / 2; 
+        const aggregateLiabilityCost = standardCyclesCount * cycleAmt;
+        const minimumThreshold = aggregateLiabilityCost * 0.50;
 
-        if (rdVaultBalance < minimumPreValidationThreshold) {
-            return alert(`Verification Failed: RD Bank needs at least 50% of total expected commitment (Required: CEN ${minimumPreValidationThreshold.toFixed(2)}). Please perform a Topup.`);
+        if (rdVaultBalance < minimumThreshold) {
+            return alert(`Verification Failed: RD Vault needs at least 50% of total expected commitment (Required: CEN ${minimumThreshold.toFixed(2)}). Please perform a Topup.`);
         }
 
         const now = Date.now();
@@ -603,7 +591,7 @@
             [`recurring_deposits/${newRdRef.key}`]: {
                 cycle_amount: cycleAmt,
                 total_lifespan_weeks: lifespanWeeks,
-                total_expected_cycles: standardFailsafeCyclesCount,
+                total_expected_cycles: standardCyclesCount,
                 completed_cycles: 0,
                 accumulated_capital: 0,
                 last_deduction_timestamp: 0,
@@ -616,19 +604,15 @@
 
         await db.ref(`users/${userId}`).update(updates);
         document.getElementById('rd-cycle-amount').value = "";
-        alert("Recurring deposit validation protocol cleared. Contract initialized.");
+        alert("Recurring deposit verified and initialized.");
     }
 
-    // ==========================================
-    // CHRONOLOGICAL CHRONOS TICK ENGINE (BACKGROUND LOGIC)
-    // ==========================================
     async function evaluateChronologicalSaveEngines() {
         const now = Date.now();
         let updates = {};
         let databaseChangeRequired = false;
         let showGraceNotification = false;
 
-        // A. Process Savings Bank Weekly Returns (7 Day Loops)
         const sb = entireDataCache.savings_bank || {};
         if (sb.cycle_start_time && now - sb.cycle_start_time >= 7 * 24 * 60 * 60 * 1000) {
             databaseChangeRequired = true;
@@ -642,7 +626,6 @@
             updates['savings_bank/cycle_start_time'] = now;
         }
 
-        // B. Process Automated Fixed Deposit Expiry Defaults (3rd Day Auto Claims)
         const allFds = entireDataCache.fixed_deposits || {};
         Object.entries(allFds).forEach(([key, fd]) => {
             if (fd.status === "ACTIVE" && now > fd.maturity_time) {
@@ -656,15 +639,12 @@
             }
         });
 
-        // C. Process Automated Recurring Deposits Engines (Every 2-Day Deductions)
         const allRds = entireDataCache.recurring_deposits || {};
         let computedRdVaultBalance = rdVaultBalance; 
 
         Object.entries(allRds).forEach(([key, rd]) => {
             if (rd.status === "PROCESSING") {
-                if (rd.grace_period_active) {
-                    showGraceNotification = true;
-                }
+                if (rd.grace_period_active) showGraceNotification = true;
 
                 if (now >= rd.next_expected_deduction_timestamp) {
                     let costPerTrigger = rd.cycle_amount;
@@ -719,68 +699,57 @@
     }
 
     function renderLedgerInterfaces(fds, rds) {
-        // Render FD Matrix UI
         const fdBox = document.getElementById('fd-ledger');
         fdBox.innerHTML = "";
         Object.entries(fds).reverse().forEach(([key, fd]) => {
             const now = Date.now();
-            let stateDetailsHtml = "";
+            let actionHtml = "";
 
             if (fd.status === "ACTIVE") {
                 if (now >= fd.maturity_time) {
-                    stateDetailsHtml = `<button class="action-btn btn-green-solid" style="padding:6px 12px; font-size:10px; width:auto;" onclick="signalManualFdMaturity('${key}')">MATURE & CLAIM</button>`;
+                    actionHtml = `<button class="btn btn-success" style="padding:8px 12px; font-size:12px; width:auto;" onclick="signalManualFdMaturity('${key}')">Claim</button>`;
                 } else {
-                    let dateStringStr = new Date(fd.maturity_time).toLocaleDateString();
-                    stateDetailsHtml = `<div style="display:flex; flex-direction:column; align-items:flex-end;">
-                        <span style="font-size:11px; color:var(--text-secondary); font-family: 'SF Mono', monospace;">Unlocks: ${dateStringStr}</span>
-                        <button class="action-btn btn-red-outline" style="padding:4px 8px; font-size:9px; width:auto; margin-top:6px;" onclick="triggerEmergencyFdBreak('${key}')">BREAK FD</button>
+                    let dateStr = new Date(fd.maturity_time).toLocaleDateString();
+                    actionHtml = `<div style="text-align: right;">
+                        <div style="font-size:12px; color:var(--text-sub); margin-bottom:4px;">Ends ${dateStr}</div>
+                        <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; width:auto;" onclick="triggerEmergencyFdBreak('${key}')">Break</button>
                     </div>`;
                 }
             } else {
-                stateDetailsHtml = `<span style="font-size:11px; font-weight:bold;" class="${fd.status.includes('CLAIMED')?'accent-green':'color:var(--text-muted)'}">${fd.status.replace(/_/g,' ')}</span>`;
+                actionHtml = `<span style="font-size:12px; font-weight:600;" class="${fd.status.includes('CLAIMED')?'text-success':'text-muted'}">${fd.status.replace(/_/g,' ')}</span>`;
             }
 
             fdBox.innerHTML += `
                 <div class="ledger-item">
-                    <div class="ledger-row">
-                        <strong style="font-family: 'SF Mono', monospace;">Principal: CEN ${fd.principal}</strong>
-                        <span>${stateDetailsHtml}</span>
+                    <div class="ledger-info">
+                        <h4>Principal: CEN ${fd.principal}</h4>
+                        <p>Rate: ${fd.interest_rate}% Return Matrix</p>
                     </div>
-                    <div class="ledger-row" style="font-size:11px; color:var(--text-muted); margin-top:6px; text-transform: uppercase;">
-                        <span>Rate Matrix Parameter: ${fd.interest_rate}%</span>
-                    </div>
+                    <div>${actionHtml}</div>
                 </div>`;
         });
 
-        // Render RD Matrix UI
         const rdBox = document.getElementById('rd-ledger');
         rdBox.innerHTML = "";
         Object.entries(rds).reverse().forEach(([key, rd]) => {
-            let traceStatusLabel = "";
+            let actionHtml = "";
             if (rd.status === "PROCESSING") {
-                traceStatusLabel = rd.grace_period_active 
-                    ? `<span class="accent-red" style="font-size:10px; font-weight:bold; text-transform:uppercase;">CRITICAL: BOUNCE GRACE</span>`
-                    : `<span class="accent-blue" style="font-size:11px; font-family: 'SF Mono', monospace;">Next: ${new Date(rd.next_expected_deduction_timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+                actionHtml = rd.grace_period_active 
+                    ? `<span class="text-danger" style="font-size:11px; font-weight:700;">OVERDUE Grace</span>`
+                    : `<span class="text-primary" style="font-size:12px;">Active</span>`;
             } else {
-                traceStatusLabel = `<span style="font-weight:bold; font-size:11px;" class="${rd.status.includes('SUCCESS')?'accent-green':'accent-red'}">${rd.status.replace(/_/g,' ')}</span>`;
+                actionHtml = `<span style="font-weight:600; font-size:12px;" class="${rd.status.includes('SUCCESS')?'text-success':'text-danger'}">${rd.status.replace(/_/g,' ')}</span>`;
             }
 
             rdBox.innerHTML += `
                 <div class="ledger-item">
-                    <div class="ledger-row">
-                        <strong style="font-family: 'SF Mono', monospace;">Cycle Pay: CEN ${rd.cycle_amount}</strong>
-                        <span>${traceStatusLabel}</span>
+                    <div class="ledger-info">
+                        <h4>Installment: CEN ${rd.cycle_amount}</h4>
+                        <p>Progress: ${rd.completed_cycles}/${rd.total_expected_cycles} Cycles • Total Saved: CEN ${rd.accumulated_capital}</p>
                     </div>
-                    <div class="ledger-row" style="font-size:11px; color:var(--text-secondary); margin-top:6px;">
-                        <span>Progress: ${rd.completed_cycles}/${rd.total_expected_cycles} Steps</span>
-                        <span style="font-family:'SF Mono', monospace; color:var(--accent-amber); font-weight:700;">Saved: CEN ${rd.accumulated_capital}</span>
-                    </div>
+                    <div>${actionHtml}</div>
                 </div>`;
         });
-    }
-
-    function dismissAlertBanner() {
-        document.getElementById('topup-alert-banner').style.display = 'none';
     }
 </script>
 </body>

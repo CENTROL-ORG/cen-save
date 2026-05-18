@@ -82,16 +82,16 @@
             </div>
         </div>
 
-        <!-- Tier 1: The Saving Bank & RD Bank Sub-Panel -->
-        <div class="card">
+        <!-- Tier 1: The Saving Bank & RD Bank Combined Registry -->
+        <div class="card" style="justify-content: flex-start; gap: 20px;">
             <div>
                 <h2>1️⃣ Vault Registry</h2>
                 
-                <!-- Saving Bank Panel Layout -->
-                <div class="sub-metric">
+                <!-- Saving Bank Section -->
+                <div class="sub-metric" style="margin-bottom: 8px;">
                     <div>
                         <div style="font-size:11px; color:#666; font-weight:bold;">SAVINGS ACCOUNT EQUITY</div>
-                        <div id="sb-balance" style="font-size:22px; font-weight:bold; font-family:monospace;" class="accent-green">CEN 0.00</div>
+                        <div id="sb-balance" style="font-size:20px; font-weight:bold; font-family:monospace;" class="accent-green">CEN 0.00</div>
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size:10px; color:#aaa;">Untouched Floor</div>
@@ -99,27 +99,34 @@
                     </div>
                 </div>
 
-                <!-- RD Bank Panel Layout (Moved below Saving Bank directly) -->
-                <div class="sub-metric" style="border-left: 4px solid #ffb300; margin-bottom: 25px;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <input type="number" id="sb-amount" placeholder="Enter Savings Amount (CEN)" min="1">
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <button class="btn-green" style="padding: 8px; font-size: 11px;" onclick="handleSavingsTransaction('deposit')">Deposit to Savings</button>
+                        <button class="btn-blue" style="padding: 8px; font-size: 11px;" onclick="handleSavingsTransaction('withdraw')">Withdraw to Current</button>
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
+
+                <!-- RD Bank Section -->
+                <div class="sub-metric" style="border-left: 4px solid #ffb300; margin-bottom: 8px;">
                     <div>
                         <div style="font-size:11px; color:#666; font-weight:bold;">RD BANK BALANCE</div>
-                        <div id="display-rd-vault-bal" style="font-size:22px; font-weight:bold; font-family:monospace;" class="accent-amber">CEN 0.00</div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <button class="btn-amber" style="margin:0; padding:4px 8px; font-size:10px; width:auto;" onclick="handleRdVaultExchange('deposit')">Topup</button>
-                        <button class="btn-blue" style="margin:0; padding:4px 8px; font-size:10px; width:auto;" onclick="handleRdVaultExchange('withdraw')">Withdraw</button>
+                        <div id="display-rd-vault-bal" style="font-size:20px; font-weight:bold; font-family:monospace;" class="accent-amber">CEN 0.00</div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Savings Transaction Amount (CEN)</label>
-                    <input type="number" id="sb-amount" placeholder="0.00" min="1">
+                    <input type="number" id="rd-vault-amount" placeholder="Enter RD Bank Amount (CEN)" min="1">
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <button class="btn-amber" style="padding: 8px; font-size: 11px;" onclick="handleRdVaultExchange('deposit')">Topup RD Bank</button>
+                        <button class="btn-blue" style="padding: 8px; font-size: 11px;" onclick="handleRdVaultExchange('withdraw')">Withdraw to Current</button>
+                    </div>
                 </div>
             </div>
-            <div>
-                <button class="btn-green" onclick="handleSavingsTransaction('deposit')">DEPOSIT TO SAVING BANK</button>
-                <button class="btn-blue" onclick="handleSavingsTransaction('withdraw')" style="margin-top:8px;">WITHDRAW TO CURRENT BANK</button>
-                <div style="font-size:10px; color:#555; text-align:center; margin-top:10px;">7-Day loops apply 3% interest reward automatically to the untouched benchmark matrix capital.</div>
+            <div style="font-size:10px; color:#555; text-align:center; margin-top:auto; padding-top: 15px;">
+                7-Day loops apply 3% interest reward automatically to the untouched benchmark matrix capital.
             </div>
         </div>
 
@@ -317,9 +324,9 @@
     // 3️⃣ RECURRING DEPOSITS CORE FUNCTIONAL ARCHITECTURE
     // ==========================================
     async function handleRdVaultExchange(action) {
-        const rawInput = prompt(`Enter capital payload value to ${action} against RD Bank balance structure:`);
-        const targetVal = parseFloat(rawInput) || 0;
-        if (targetVal <= 0) return;
+        const amtField = document.getElementById('rd-vault-amount');
+        const targetVal = parseFloat(amtField.value) || 0;
+        if (targetVal <= 0) return alert("Please specify a valid financial transaction quantity.");
 
         let updates = {};
         if (action === 'deposit') {
@@ -332,6 +339,7 @@
             updates['rd_vault_balance'] = Math.round((rdVaultBalance - targetVal) * 100) / 100;
         }
         await db.ref(`users/${userId}`).update(updates);
+        amtField.value = "";
     }
 
     async function initializeRecurringDeposit() {

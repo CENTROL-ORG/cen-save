@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEN SAVE SYSTEM & DEPOSIT REGISTRY</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { background: #0a0a0a; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 30px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .full-width { grid-column: span 3; }
+        .card { background: #111; border: 1px solid #222; padding: 25px; border-radius: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+        h2 { margin-top: 0; font-weight: 800; letter-spacing: -0.5px; font-size: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .accent-green { color: #00ff88; }
+        .accent-red { color: #ff0033; }
+        .accent-blue { color: #00e1ff; }
+        .accent-amber { color: #ffb300; }
+        
+        .main-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px; }
+        .stat-box { background: #161616; padding: 15px; border-radius: 10px; border-left: 4px solid #333; }
+        .stat-box.primary { border-left-color: #00e1ff; }
+        .stat-box.secondary { border-left-color: #ffb300; }
+        .stat-label { font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase; }
+        .stat-value { font-size: 24px; font-weight: bold; margin-top: 5px; font-family: monospace; }
+
+        .sub-metric { background: #151515; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; color: #888; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; }
+        input:focus, select:focus { border-color: #00ff88; }
+        
+        button { width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; margin-top: 5px; transition: background 0.2s; }
+        .btn-green { background: #00ff88; color: #000; }
+        .btn-green:hover { background: #00cc6e; }
+        .btn-blue { background: #00e1ff; color: #000; }
+        .btn-blue:hover { background: #00b5cc; }
+        .btn-amber { background: #ffb300; color: #000; }
+        .btn-amber:hover { background: #cc8f00; }
+        .btn-red { background: #ff0033; color: #fff; }
+        .btn-red:hover { background: #cc0029; }
+
+        .ledger-box { max-height: 220px; overflow-y: auto; margin-top: 15px; padding-right: 5px; }
+        .ledger-item { background: #161616; padding: 10px; border-radius: 8px; border: 1px solid #222; margin-bottom: 8px; font-size: 12px; }
+        .ledger-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- Top System Overview Block -->
+    <div class="card full-width" style="background: #111;">
+        <h2>🏛️ CEN SAVE MANAGEMENT TERMINAL</h2>
+        <div class="main-stats">
+            <div class="stat-box primary">
+                <div class="stat-label">CEN Current Bank Balance</div>
+                <div id="display-current-bal" class="stat-value accent-blue">CEN 0.00</div>
+            </div>
+            <div class="stat-box secondary">
+                <div class="stat-label">RD Vault Ledger Bank Balance</div>
+                <div id="display-rd-vault-bal" class="stat-value accent-amber">CEN 0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier 1: The Saving Bank -->
+    <div class="card">
+        <div>
+            <h2>1️⃣ Saving Bank Vault</h2>
+            <div class="sub-metric">
+                <div>
+                    <div style="font-size:11px; color:#666; font-weight:bold;">SAVINGS ACCOUNT EQUITY</div>
+                    <div id="sb-balance" style="font-size:22px; font-weight:bold; font-family:monospace;" class="accent-green">CEN 0.00</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size:10px; color:#aaa;">Untouched Benchmark</div>
+                    <div id="sb-untouched" style="font-family:monospace; font-weight:bold; color:#00ff88;">CEN 0.00</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Transaction Amount (CEN)</label>
+                <input type="number" id="sb-amount" placeholder="0.00" min="1">
+            </div>
+        </div>
+        <div>
+            <button class="btn-green" onclick="handleSavingsTransaction('deposit')">DEPOSIT TO SAVING BANK</button>
+            <button class="btn-blue" onclick="handleSavingsTransaction('withdraw')" style="margin-top:8px;">WITHDRAW TO CURRENT BANK</button>
+            <div style="font-size:10px; color:#555; text-align:center; margin-top:10px;">7-Day loops apply 3% interest reward automatically to the untouched benchmark matrix capital.</div>
+        </div>
+    </div>
+
+    <!-- Tier 2: Fixed Deposits (FD) -->
+    <div class="card">
+        <div>
+            <h2>2️⃣ Fixed Deposits Panel</h2>
+            <div class="form-group">
+                <label>FD Allocation Capital (Min: CEN 500)</label>
+                <input type="number" id="fd-amount" placeholder="CEN 500.00">
+            </div>
+            <div class="form-group">
+                <label>Maturation Term Duration</label>
+                <select id="fd-duration" onchange="calculateFdPreview()">
+                    <option value="1">1 Week Time-Lock (6% Return)</option>
+                    <option value="2">2 Weeks Time-Lock (8% Return)</option>
+                    <option value="3">3 Weeks Time-Lock (10% Return)</option>
+                    <option value="4">4 Weeks Time-Lock (12% Return)</option>
+                    <option value="5">5 Weeks Time-Lock (14% Return)</option>
+                </select>
+            </div>
+            <div id="fd-preview" style="font-size:11px; color:#aaa; margin-bottom:10px; font-family:monospace;">Yield Estimation: Pending Input...</div>
+            <button class="btn-green" onclick="initializeFixedDeposit()">EMIT TIME-LOCKED FD</button>
+        </div>
+        
+        <div>
+            <label style="margin-top:15px;">Active Fixed Deposit Matrix Ledger</label>
+            <div id="fd-ledger" class="ledger-box"></div>
+        </div>
+    </div>
+
+    <!-- Tier 3: Recurring Deposits (RD) -->
+    <div class="card">
+        <div>
+            <h2>3️⃣ Recurring Deposits Engine</h2>
+            
+            <div style="background:#161616; padding:10px; border-radius:8px; display:flex; gap:10px; margin-bottom:12px;">
+                <button class="btn-amber" style="margin:0; padding:8px; font-size:11px;" onclick="handleRdVaultExchange('deposit')">Vault Topup</button>
+                <button class="btn-blue" style="margin:0; padding:8px; font-size:11px;" onclick="handleRdVaultExchange('withdraw')">Vault Withdraw</button>
+            </div>
+
+            <div class="form-group">
+                <label>Cycle Increment Amount (CEN)</label>
+                <input type="number" id="rd-cycle-amount" placeholder="e.g. 200">
+            </div>
+            <div class="form-group">
+                <label>Target Execution Lifespan (Weeks)</label>
+                <input type="number" id="rd-lifespan-weeks" placeholder="Min: 2 Weeks" min="2" value="2">
+            </div>
+            <button class="btn-green" onclick="initializeRecurringDeposit()">VERIFY & START RD CONTRACT</button>
+        </div>
+
+        <div>
+            <label style="margin-top:15px;">Active Automated RD Contracts</label>
+            <div id="rd-ledger" class="ledger-box"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://centrol-bank-default-rtdb.asia-southeast1.firebasedatabase.app" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const userId = "pranshi_main";
+
+    let currentBankBalance = 0;
+    let rdVaultBalance = 0;
+    let entireDataCache = {};
+
+    db.ref(`users/${userId}`).on('value', async (snap) => {
+        entireDataCache = snap.val() || {};
+        currentBankBalance = parseFloat(entireDataCache.balance) || 0;
+        rdVaultBalance = parseFloat(entireDataCache.rd_vault_balance) || 0;
+
+        document.getElementById('display-current-bal').innerText = `CEN ${currentBankBalance.toFixed(2)}`;
+        document.getElementById('display-rd-vault-bal').innerText = `CEN ${rdVaultBalance.toFixed(2)}`;
+
+        renderSavingsBankSection();
+        await evaluateChronologicalSaveEngines();
+    });
+
+    // ==========================================
+    // 1️⃣ SAVINGS BANK CORE FUNCTIONAL ARCHITECTURE
+    // ==========================================
+    function renderSavingsBankSection() {
+        const sb = entireDataCache.savings_bank || { balance: 0, untouched_floor: 0 };
+        document.getElementById('sb-balance').innerText = `CEN ${parseFloat(sb.balance).toFixed(2)}`;
+        document.getElementById('sb-untouched').innerText = `CEN ${parseFloat(sb.untouched_floor).toFixed(2)}`;
+    }
+
+    async function handleSavingsTransaction(actionType) {
+        const amtField = document.getElementById('sb-amount');
+        const amount = parseFloat(amtField.value) || 0;
+        if (amount <= 0) return alert("Please specify a valid financial transaction quantity.");
+
+        let sb = entireDataCache.savings_bank || { balance: 0, untouched_floor: 0, cycle_start_time: Date.now() };
+        let sbBal = parseFloat(sb.balance) || 0;
+        let sbFloor = parseFloat(sb.untouched_floor) || 0;
+        
+        let updates = {};
+
+        if (actionType === 'deposit') {
+            if (currentBankBalance < amount) return alert("Insufficient core liquid balance.");
+            updates['balance'] = Math.round((currentBankBalance - amount) * 100) / 100;
+            
+            sbBal += amount;
+            // First time deposit sets benchmark baseline floor directly
+            if (sbBal - amount === 0) sbFloor = amount; 
+        } else if (actionType === 'withdraw') {
+            if (sbBal < amount) return alert("Withdrawal demand exceeds available savings balance framework.");
+            updates['balance'] = Math.round((currentBankBalance + amount) * 100) / 100;
+            
+            sbBal -= amount;
+            // Floor tracks lowest point balance dips to inside the 7 day period
+            if (sbBal < sbFloor) sbFloor = sbBal;
+        }
+
+        updates['savings_bank/balance'] = Math.round(sbBal * 100) / 100;
+        updates['savings_bank/untouched_floor'] = Math.round(sbFloor * 100) / 100;
+        if (!sb.cycle_start_time) updates['savings_bank/cycle_start_time'] = Date.now();
+
+        await db.ref(`users/${userId}`).update(updates);
+        amtField.value = "";
+    }
+
+
+    // ==========================================
+    // 2️⃣ FIXED DEPOSITS CORE FUNCTIONAL ARCHITECTURE
+    // ==========================================
+    function calculateFdPreview() {
+        const amt = parseFloat(document.getElementById('fd-amount').value) || 0;
+        const weeks = parseInt(document.getElementById('fd-duration').value) || 1;
+        const rate = 6 + ((weeks - 1) * 2); 
+        const yieldAmt = amt * (rate / 100);
+        document.getElementById('fd-preview').innerText = `Yield Estimation: +CEN ${yieldAmt.toFixed(2)} (${rate}% Return Matrix)`;
+    }
+    document.getElementById('fd-amount').addEventListener('input', calculateFdPreview);
+
+    async function initializeFixedDeposit() {
+        const amtField = document.getElementById('fd-amount');
+        const capital = parseFloat(amtField.value) || 0;
+        const weeks = parseInt(document.getElementById('fd-duration').value) || 1;
+
+        if (capital < 500) return alert("Minimum commitment required to issue Fixed Deposit is CEN 500.");
+        if (currentBankBalance < capital) return alert("Deficit identified in liquid bank balance configuration.");
+
+        const now = Date.now();
+        const durationMs = weeks * 7 * 24 * 60 * 60 * 1000;
+        const rate = 6 + ((weeks - 1) * 2);
+
+        let newFdRef = db.ref(`users/${userId}/fixed_deposits`).push();
+        let updates = {
+            [`balance`]: Math.round((currentBankBalance - capital) * 100) / 100,
+            [`fixed_deposits/${newFdRef.key}`]: {
+                principal: capital,
+                interest_rate: rate,
+                issued_time: now,
+                maturity_time: now + durationMs,
+                status: "ACTIVE"
+            }
+        };
+
+        await db.ref(`users/${userId}`).update(updates);
+        amtField.value = "";
+        alert("Fixed Deposit safely executed and registered in centralized memory.");
+    }
+
+    async function signalManualFdMaturity(fdKey) {
+        const fd = entireDataCache.fixed_deposits[fdKey];
+        const returnAmount = fd.principal + (fd.principal * (fd.interest_rate / 100));
+
+        let updates = {
+            [`balance`]: Math.round((currentBankBalance + returnAmount) * 100) / 100,
+            [`fixed_deposits/${fdKey}/status`]: "MATURED_CLAIMED"
+        };
+        await db.ref(`users/${userId}`).update(updates);
+        alert(`Fixed deposit completed! CEN ${returnAmount.toFixed(2)} has shifted back to liquid balance parameters.`);
+    }
+
+    async function triggerEmergencyFdBreak(fdKey) {
+        const fd = entireDataCache.fixed_deposits[fdKey];
+        const targetConfirmationValue = fd.principal.toString();
+        
+        const verificationInput = prompt(`CRITICAL OPERATIONS INVOCATION:\nBreaking this contract completely strips all interest benefits.\nTo verify liquidation, type the exact principal amount (${targetConfirmationValue}):`);
+        
+        if (verificationInput !== targetConfirmationValue) {
+            return alert("Verification mismatch. Emergency termination sequence halted.");
+        }
+
+        let updates = {
+            [`balance`]: Math.round((currentBankBalance + fd.principal) * 100) / 100,
+            [`fixed_deposits/${fdKey}/status`]: "LIQUIDATED_PREMATURE"
+        };
+        await db.ref(`users/${userId}`).update(updates);
+        alert("Contract completely broken. Original investment principle recovered with 0% absolute yields.");
+    }
+
+
+    // ==========================================
+    // 3️⃣ RECURRING DEPOSITS CORE FUNCTIONAL ARCHITECTURE
+    // ==========================================
+    async function handleRdVaultExchange(action) {
+        const rawInput = prompt(`Enter capital payload value to ${action} against RD Vault balance structure:`);
+        const targetVal = parseFloat(rawInput) || 0;
+        if (targetVal <= 0) return;
+
+        let updates = {};
+        if (action === 'deposit') {
+            if (currentBankBalance < targetVal) return alert("Insufficient central liquid asset pool.");
+            updates['balance'] = Math.round((currentBankBalance - targetVal) * 100) / 100;
+            updates['rd_vault_balance'] = Math.round((rdVaultBalance + targetVal) * 100) / 100;
+        } else {
+            if (rdVaultBalance < targetVal) return alert("Request matches more than total localized RD vault reserves.");
+            updates['balance'] = Math.round((currentBankBalance + targetVal) * 100) / 100;
+            updates['rd_vault_balance'] = Math.round((rdVaultBalance - targetVal) * 100) / 100;
+        }
+        await db.ref(`users/${userId}`).update(updates);
+    }
+
+    async function initializeRecurringDeposit() {
+        const cycleAmt = parseFloat(document.getElementById('rd-cycle-amount').value) || 0;
+        const lifespanWeeks = parseInt(document.getElementById('rd-lifespan-weeks').value) || 2;
+
+        if (cycleAmt <= 0 || lifespanWeeks < 2) {
+            return alert("Verify configuration settings: Lifespan minimum standard is 2 Weeks.");
+        }
+
+        const standardFailsafeCyclesCount = (lifespanWeeks * 7) / 2; 
+        const aggregateLiabilityCost = standardFailsafeCyclesCount * cycleAmt;
+        const minimumPreValidationThreshold = aggregateLiabilityCost * 0.50;
+
+        if (rdVaultBalance < minimumPreValidationThreshold) {
+            return alert(`Verification Failed: RD Vault Ledger needs at least 50% of total expected commitment (Required: CEN ${minimumPreValidationThreshold.toFixed(2)}). Please perform a Vault Topup.`);
+        }
+
+        const now = Date.now();
+        let newRdRef = db.ref(`users/${userId}/recurring_deposits`).push();
+        
+        let updates = {
+            [`recurring_deposits/${newRdRef.key}`]: {
+                cycle_amount: cycleAmt,
+                total_lifespan_weeks: lifespanWeeks,
+                total_expected_cycles: standardFailsafeCyclesCount,
+                completed_cycles: 0,
+                accumulated_capital: 0,
+                last_deduction_timestamp: 0,
+                next_expected_deduction_timestamp: now, 
+                grace_period_active: false,
+                grace_expiry_timestamp: 0,
+                status: "PROCESSING"
+            }
+        };
+
+        await db.ref(`users/${userId}`).update(updates);
+        document.getElementById('rd-cycle-amount').value = "";
+        alert("Recurring deposit validation protocol cleared. Contract initialized.");
+    }
+
+
+    // ==========================================
+    // CHRONOLOGICAL CHRONOS TICK ENGINE (BACKGROUND LOGIC)
+    // ==========================================
+    async function evaluateChronologicalSaveEngines() {
+        const now = Date.now();
+        let updates = {};
+        let databaseChangeRequired = false;
+
+        // A. Process Savings Bank Weekly Returns (7 Day Loops)
+        const sb = entireDataCache.savings_bank || {};
+        if (sb.cycle_start_time && now - sb.cycle_start_time >= 7 * 24 * 60 * 60 * 1000) {
+            databaseChangeRequired = true;
+            let floorValue = parseFloat(sb.untouched_floor) || 0;
+            let currentTotalValue = parseFloat(sb.balance) || 0;
+            let yieldInterestReward = floorValue * 0.03;
+
+            let updatedSavingsBalance = currentTotalValue + yieldInterestReward;
+            updates['savings_bank/balance'] = Math.round(updatedSavingsBalance * 100) / 100;
+            updates['savings_bank/untouched_floor'] = Math.round(updatedSavingsBalance * 100) / 100; 
+            updates['savings_bank/cycle_start_time'] = now;
+        }
+
+        // B. Process Automated Fixed Deposit Expiry Defaults (3rd Day Auto Claims)
+        const allFds = entireDataCache.fixed_deposits || {};
+        Object.entries(allFds).forEach(([key, fd]) => {
+            if (fd.status === "ACTIVE" && now > fd.maturity_time) {
+                let thirdDayThreshold = fd.maturity_time + (2 * 24 * 60 * 60 * 1000);
+                if (now >= thirdDayThreshold) {
+                    databaseChangeRequired = true;
+                    let fullPayout = fd.principal + (fd.principal * (fd.interest_rate / 100));
+                    updates['balance'] = Math.round((currentBankBalance + fullPayout) * 100) / 100;
+                    updates[`fixed_deposits/${key}/status`] = "AUTO_MATURED_DIRECT_CREDIT";
+                }
+            }
+        });
+
+        // C. Process Automated Recurring Deposits Engines (Every 2-Day Deductions)
+        const allRds = entireDataCache.recurring_deposits || {};
+        // Use fresh local variables since loop updates can accumulate over multiple objects
+        let computedRdVaultBalance = rdVaultBalance; 
+
+        Object.entries(allRds).forEach(([key, rd]) => {
+            if (rd.status === "PROCESSING") {
+                // Check if a cycle extraction period is due
+                if (now >= rd.next_expected_deduction_timestamp) {
+                    let costPerTrigger = rd.cycle_amount;
+
+                    if (computedRdVaultBalance >= costPerTrigger) {
+                        // Success Loop
+                        databaseChangeRequired = true;
+                        computedRdVaultBalance -= costPerTrigger;
+                        let updatedCyclesCount = rd.completed_cycles + 1;
+                        let combinedCapital = rd.accumulated_capital + costPerTrigger;
+
+                        updates[`recurring_deposits/${key}/completed_cycles`] = updatedCyclesCount;
+                        updates[`recurring_deposits/${key}/accumulated_capital`] = combinedCapital;
+                        updates[`recurring_deposits/${key}/last_deduction_timestamp`] = now;
+                        updates[`recurring_deposits/${key}/next_expected_deduction_timestamp`] = now + (2 * 24 * 60 * 60 * 1000);
+                        updates[`recurring_deposits/${key}/grace_period_active`] = false;
+
+                        // Check termination maturity conditions
+                        if (updatedCyclesCount >= rd.total_expected_cycles) {
+                            let endYieldBonus = combinedCapital * 0.15;
+                            computedRdVaultBalance += (combinedCapital + endYieldBonus);
+                            updates[`recurring_deposits/${key}/status`] = "SUCCESSFULLY_MATURED";
+                        }
+                    } else {
+                        // Deficit Protocol triggered: initiate or track 24H grace window
+                        if (!rd.grace_period_active) {
+                            databaseChangeRequired = true;
+                            updates[`recurring_deposits/${key}/grace_period_active`] = true;
+                            updates[`recurring_deposits/${key}/grace_expiry_timestamp`] = now + (24 * 60 * 60 * 1000);
+                        } else if (now >= rd.grace_expiry_timestamp) {
+                            // Grace has elapsed completely and remains unpaid: Liquidate Contract immediately with 10% penalty deduction
+                            databaseChangeRequired = true;
+                            let penaltyCutValue = rd.accumulated_capital * 0.10;
+                            let refundCapitalPayout = rd.accumulated_capital - penaltyCutValue;
+
+                            computedRdVaultBalance += refundCapitalPayout;
+                            updates[`recurring_deposits/${key}/status`] = "TERMINATED_DUE_TO_INSUFFICIENT_FUNDS";
+                        }
+                    }
+                }
+            }
+        });
+
+        if (databaseChangeRequired) {
+            if (updates.hasOwnProperty('rd_vault_balance') || computedRdVaultBalance !== rdVaultBalance) {
+                updates['rd_vault_balance'] = Math.round(computedRdVaultBalance * 100) / 100;
+            }
+            await db.ref(`users/${userId}`).update(updates);
+            return;
+        }
+
+        renderLedgerInterfaces(allFds, allRds);
+    }
+
+    function renderLedgerInterfaces(fds, rds) {
+        // Render FD Matrix UI
+        const fdBox = document.getElementById('fd-ledger');
+        fdBox.innerHTML = "";
+        Object.entries(fds).reverse().forEach(([key, fd]) => {
+            const now = Date.now();
+            let stateDetailsHtml = "";
+
+            if (fd.status === "ACTIVE") {
+                if (now >= fd.maturity_time) {
+                    stateDetailsHtml = `<button class="btn-green" style="padding:4px 8px; font-size:11px;" onclick="signalManualFdMaturity('${key}')">MATURE & CLAIM</button>`;
+                } else {
+                    let dateStringStr = new Date(fd.maturity_time).toLocaleDateString();
+                    stateDetailsHtml = `<div style="display:flex; flex-direction:column; align-items:flex-end;">
+                        <span style="font-size:10px; color:#aaa;">Unlocks: ${dateStringStr}</span>
+                        <button class="btn-red" style="padding:2px 6px; font-size:10px; margin-top:4px;" onclick="triggerEmergencyFdBreak('${key}')">BREAK FD</button>
+                    </div>`;
+                }
+            } else {
+                stateDetailsHtml = `<span style="font-size:11px; font-weight:bold;" class="${fd.status.includes('CLAIMED')?'accent-green':'color:#666'}">${fd.status.replace(/_/g,' ')}</span>`;
+            }
+
+            fdBox.innerHTML += `
+                <div class="ledger-item">
+                    <div class="ledger-row">
+                        <strong>Principal: CEN ${fd.principal}</strong>
+                        <span>${stateDetailsHtml}</span>
+                    </div>
+                    <div class="ledger-row" style="font-size:10px; color:#666; margin-top:4px;">
+                        <span>Rate Matrix Parameter: ${fd.interest_rate}%</span>
+                    </div>
+                </div>`;
+        });
+
+        // Render RD Matrix UI
+        const rdBox = document.getElementById('rd-ledger');
+        rdBox.innerHTML = "";
+        Object.entries(rds).reverse().forEach(([key, rd]) => {
+            let traceStatusLabel = "";
+            if (rd.status === "PROCESSING") {
+                traceStatusLabel = rd.grace_period_active 
+                    ? `<span class="accent-red" style="font-size:10px; font-weight:bold;">CRITICAL: 24H BOUNCE GRACE RUNNING</span>`
+                    : `<span class="accent-blue" style="font-size:10px;">Next Cycle: ${new Date(rd.next_expected_deduction_timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+            } else {
+                traceStatusLabel = `<span style="font-weight:bold; font-size:11px;" class="${rd.status.includes('SUCCESS')?'accent-green':'accent-red'}">${rd.status.replace(/_/g,' ')}</span>`;
+            }
+
+            rdBox.innerHTML += `
+                <div class="ledger-item">
+                    <div class="ledger-row">
+                        <strong>Cycle Pay: CEN ${rd.cycle_amount}</strong>
+                        <span>${traceStatusLabel}</span>
+                    </div>
+                    <div class="ledger-row" style="font-size:10px; color:#aaa; margin-top:4px;">
+                        <span>Progress: ${rd.completed_cycles}/${rd.total_expected_cycles} Steps Cleared</span>
+                        <span style="font-family:monospace; color:#ffb300;">Saved Pool: CEN ${rd.accumulated_capital}</span>
+                    </div>
+                </div>`;
+        });
+    }
+</script>
+</body>
+</html>

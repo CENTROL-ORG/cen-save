@@ -8,8 +8,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { background: #0a0a0a; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 30px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; position: relative; }
-        .full-width { grid-column: span 3; }
+        /* Grid changed to 4 columns to fit the Main System Ledger */
+        .container { width: 100%; max-width: 1600px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; position: relative; }
+        .full-width { grid-column: span 4; }
         .card { background: #111; border: 1px solid #222; padding: 25px; border-radius: 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
         h2 { margin-top: 0; font-weight: 800; letter-spacing: -0.5px; font-size: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         
@@ -41,11 +42,11 @@
         .btn-red { background: #ff0033; color: #fff; }
         .btn-red:hover { background: #cc0029; }
 
-        .ledger-box { max-height: 220px; overflow-y: auto; margin-top: 15px; padding-right: 5px; }
+        /* Expanded scroll heights for long journals */
+        .ledger-box { max-height: 400px; overflow-y: auto; margin-top: 15px; padding-right: 5px; }
         .ledger-item { background: #161616; padding: 10px; border-radius: 8px; border: 1px solid #222; margin-bottom: 8px; font-size: 12px; }
         .ledger-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 
-        /* Notification Banner Style */
         .topup-popup { display: none; background: #2b1116; border: 2px solid #ff0033; border-radius: 12px; padding: 15px; margin-bottom: 20px; animation: pulseGlow 2s infinite; }
         @keyframes pulseGlow {
             0% { box-shadow: 0 0 5px #ff0033; }
@@ -56,7 +57,7 @@
 </head>
 <body>
 
-<div style="width: 100%; max-width: 1200px;">
+<div style="width: 100%; max-width: 1600px;">
 
     <!-- Automated Topup Popup Notification Alert -->
     <div id="topup-alert-banner" class="topup-popup">
@@ -154,7 +155,7 @@
             
             <div>
                 <label style="margin-top:15px;">Active Fixed Deposit Matrix Ledger</label>
-                <div id="fd-ledger" class="ledger-box"></div>
+                <div id="fd-ledger" class="ledger-box" style="max-height: 220px;"></div>
             </div>
         </div>
 
@@ -176,7 +177,18 @@
 
             <div>
                 <label style="margin-top:15px;">Active Automated RD Contracts</label>
-                <div id="rd-ledger" class="ledger-box"></div>
+                <div id="rd-ledger" class="ledger-box" style="max-height: 220px;"></div>
+            </div>
+        </div>
+
+        <!-- Tier 4: Global System Ledger Journal Record Display -->
+        <div class="card">
+            <div>
+                <h2>📜 System Ledger Journal</h2>
+                <div style="font-size:11px; color:#666; font-weight:bold; text-transform:uppercase; margin-bottom:5px;">Realtime Central Account Feed</div>
+                <div id="system-journal-ledger" class="ledger-box" style="max-height: 480px;">
+                    <div style="color:#555; text-align:center; font-size:12px; padding-top:20px;">Awaiting core journal synchronization...</div>
+                </div>
             </div>
         </div>
 
@@ -202,8 +214,58 @@
         document.getElementById('display-rd-vault-bal').innerText = `CEN ${rdVaultBalance.toFixed(2)}`;
 
         renderSavingsBankSection();
+        renderSystemJournalLedger(entireDataCache.ledger || entireDataCache.transactions || {});
         await evaluateChronologicalSaveEngines();
     });
+
+    // ==========================================
+    // 📜 CORE JOURNAL RENDERING ENGINE 
+    // ==========================================
+    function renderSystemJournalLedger(ledgerData) {
+        const journalBox = document.getElementById('system-journal-ledger');
+        journalBox.innerHTML = "";
+
+        const entries = Object.entries(ledgerData);
+        if (entries.length === 0) {
+            journalBox.innerHTML = `<div style="color:#555; text-align:center; font-size:12px; padding-top:20px;">No global records found.</div>`;
+            return;
+        }
+
+        // Sort to show newest events at the very top
+        entries.reverse().forEach(([key, log]) => {
+            let logTitle = log.title || log.purpose || log.message || "System Transaction";
+            let logTime = log.timestamp || log.time || "";
+            let logAmount = parseFloat(log.amount) || 0;
+            let type = log.type || (logAmount >= 0 ? "credit" : "debit");
+
+            // Format timestamp into human readable date if it's numerical ms
+            if (typeof logTime === 'number') {
+                logTime = new Date(logTime).toLocaleString();
+            }
+
+            let amountDisplay = "";
+            let amountClass = "";
+
+            if (type === "credit" || logAmount > 0) {
+                amountDisplay = `+CEN ${Math.abs(logAmount).toFixed(2)}`;
+                amountClass = "accent-green";
+            } else {
+                amountDisplay = `-CEN ${Math.abs(logAmount).toFixed(2)}`;
+                amountClass = "accent-red";
+            }
+
+            journalBox.innerHTML += `
+                <div class="ledger-item" style="border-left: 3px solid ${type==='credit'?'#00ff88':'#ff0033'}">
+                    <div class="ledger-row">
+                        <strong style="font-size:13px; color:#fff;">${logTitle}</strong>
+                    </div>
+                    <div class="ledger-row" style="margin-top:5px;">
+                        <span style="color:#666; font-size:11px;">${logTime}</span>
+                        <b class="${amountClass}" style="font-family:monospace; font-size:13px;">${amountDisplay}</b>
+                    </div>
+                </div>`;
+        });
+    }
 
     // ==========================================
     // 1️⃣ SAVINGS BANK CORE FUNCTIONAL ARCHITECTURE
@@ -472,7 +534,6 @@
             }
         });
 
-        // Toggle Topup Notification display state dynamically based on active account alerts
         document.getElementById('topup-alert-banner').style.display = showGraceNotification ? 'block' : 'none';
 
         if (databaseChangeRequired) {
